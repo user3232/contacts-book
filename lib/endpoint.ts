@@ -30,7 +30,9 @@ export async function contactsEndpoint({
     )
     .then(async (file) => {
         await using cleanup = new AsyncDisposableStack()
-        cleanup.defer(() => file.close())
+        cleanup.defer(async () => {
+            await file.close()
+        })
         const fileStat = await file.stat()
         if(!fileStat.isFile()) {
             return {
@@ -68,7 +70,7 @@ export async function contactsEndpoint({
             })
 
             await using cleanup = new AsyncDisposableStack()
-            cleanup.defer(() => void res.end())
+            cleanup.defer(() => { res.end() })
 
             res.writeHead(200, {
                 'Content-Length': Buffer.byteLength(contactsBookHtml),
@@ -80,7 +82,7 @@ export async function contactsEndpoint({
         }
         case 'file-open-ok': {
             await using cleanup = fileRes.cleanup
-            cleanup.defer(() => void res.end())
+            cleanup.defer(() => { res.end() })
 
             res.writeHead(200, {
                 'Content-Length': fileRes.size,

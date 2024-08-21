@@ -22,6 +22,7 @@ function RenderContactsHtml({ rootUrl, cssUrl, mainJsUrl, lang, title, icon, vie
         : ``;
     viewportContent ??= 'width=device-width, initial-scale=1.0';
     return `\
+        <!doctype html>
         <html ${langAttr}>
         <head>
             <meta charset="utf-8" />
@@ -155,7 +156,9 @@ async function contactsEndpoint({ spaPath, res, contacts }) {
         const env_3 = { stack: [], error: void 0, hasError: false };
         try {
             const cleanup = __addDisposableResource(env_3, new AsyncDisposableStack(), true);
-            cleanup.defer(() => file.close());
+            cleanup.defer(async () => {
+                await file.close();
+            });
             const fileStat = await file.stat();
             if (!fileStat.isFile()) {
                 return {
@@ -200,7 +203,7 @@ async function contactsEndpoint({ spaPath, res, contacts }) {
                     viewportContent: 'width=device-width, initial-scale=1.0',
                 });
                 const cleanup = __addDisposableResource(env_1, new AsyncDisposableStack(), true);
-                cleanup.defer(() => void res.end());
+                cleanup.defer(() => { res.end(); });
                 res.writeHead(200, {
                     'Content-Length': Buffer.byteLength(contactsBookHtml),
                     'Content-Type': contactsMimeMap.html,
@@ -222,7 +225,7 @@ async function contactsEndpoint({ spaPath, res, contacts }) {
             const env_2 = { stack: [], error: void 0, hasError: false };
             try {
                 const cleanup = __addDisposableResource(env_2, fileRes.cleanup, true);
-                cleanup.defer(() => void res.end());
+                cleanup.defer(() => { res.end(); });
                 res.writeHead(200, {
                     'Content-Length': fileRes.size,
                     'Content-Type': contacts.mimeMap[path.extname(resourcePath).substring(1)]

@@ -43,6 +43,7 @@ export function RenderContactsHtml({
     viewportContent ??= 'width=device-width, initial-scale=1.0'
 
     return `\
+        <!doctype html>
         <html ${langAttr}>
         <head>
             <meta charset="utf-8" />
