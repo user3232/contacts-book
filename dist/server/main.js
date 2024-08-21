@@ -230,7 +230,7 @@ function exampleRunContactsServer({ PORT, HOST, BASEURL_CONTACTS, BASEPATH_CONTA
         try {
             const url = req.url;
             // requested resource outside web app base url:
-            if (!url || url.startsWith(`${BASEURL_CONTACTS}/`)) {
+            if (!url || (url !== BASEURL_CONTACTS && !url.startsWith(`${BASEURL_CONTACTS}/`))) {
                 const errorHtml = `See Contacts Book at: http://${HOST}${PORT ? `:${PORT}` : ``}${BASEURL_CONTACTS}`;
                 res.writeHead(200, {
                     'Content-Length': Buffer.byteLength(errorHtml),
