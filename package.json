@@ -1,0 +1,74 @@
+{
+  "name": "@user3232/contacts-book",
+  "version": "1.0.1",
+  "description": "SPA application for storing contacts",
+  "keywords": [
+    "spa",
+    "react",
+    "react-router"
+  ],
+  "author": "kolodziej.michal %at% gmail.com",
+  "license": "ISC",
+  "repository": {
+    "type": "git",
+    "url": "git+file:///home/mk/github/tutorials/contacts-book"
+  },
+  "type": "module",
+  "exports": {
+    "./browser": {
+      "browser": {
+        "types": "./dist/browser/main.d.ts",
+        "import": "./dist/browser/main.js"
+      }
+    },
+    "./server": {
+      "node": {
+        "types": "./dist/server/main.d.ts",
+        "import": "./dist/server/main.js"
+      }
+    },
+    "./mime-map.json": "./mime-map.json",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "css",
+    "dist",
+    "lib",
+    "public",
+    "src",
+    "index.html",
+    "package.json",
+    "README"
+  ],
+  "devDependencies": {
+    "@rollup/plugin-commonjs": "^26.0.1",
+    "@rollup/plugin-json": "^6.1.0",
+    "@rollup/plugin-node-resolve": "^15.2.3",
+    "@rollup/plugin-replace": "^5.0.7",
+    "@rollup/plugin-typescript": "^11.1.6",
+    "@types/react": "^18.3.3",
+    "@types/react-dom": "^18.3.0",
+    "@types/sort-by": "^1.2.3",
+    "@user3232/flatten-vite-manifest": "git+file:///home/mk/github/tutorials/flatten-vite-manifest#semver:latest",
+    "@user3232/mime": "git+file:///home/mk/github/tutorials/mime#semver:latest",
+    "globals": "^15.9.0",
+    "http-server": "^14.1.1",
+    "localforage": "^1.10.0",
+    "match-sorter": "^6.3.4",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-router-dom": "^6.26.0",
+    "rollup": "^4.21.0",
+    "sort-by": "^1.2.0",
+    "tslib": "^2.6.3",
+    "tsx": "^4.17.0",
+    "typescript": "^5.5.3"
+  },
+  "scripts": {
+    "serve": "http-server ./",
+    "build": "npm run build-app && npm run build-lib",
+    "build-app": "rollup --config rollup.config.app.js",
+    "build-lib": "rollup --config rollup.config.lib.js",
+    "test": "tsx --test test"
+  }
+}
