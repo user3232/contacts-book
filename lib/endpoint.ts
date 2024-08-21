@@ -21,20 +21,38 @@ export async function contactsEndpoint({
     }
 }) {
     const resourcePath = path.join(contacts.baseDirPath, spaPath)
-    console.log(`trying open: ${resourcePath}`)
 
     // first try respond with resource and when no resource, 
     // respond with app entry point html.
-    const {type, file, err} = await fs.open(
+    const fileRes = await fs.open(
         resourcePath, 
         fs.constants.O_RDONLY | fs.constants.O_NONBLOCK
     )
-    .then((file) => ({type: 'file-open-ok' as const, file, err: null}))
-    .catch((err) => ({type: 'file-open-error' as const, file: null, err}))
+    .then(async (file) => {
+        await using cleanup = new AsyncDisposableStack()
+        cleanup.defer(() => file.close())
+        const fileStat = await file.stat()
+        if(!fileStat.isFile()) {
+            return {
+                type: 'file-open-error' as const, 
+                file: null, 
+                err: 'file is directory'
+            }
+        }
+        const size = fileStat.size
+        return {
+            type: 'file-open-ok' as const, 
+            file, 
+            size,
+            cleanup: cleanup.move(),
+        }
+    })
+    .catch((err) => ({type: 'file-open-error' as const, err}))
 
-    console.log(err)
+    
 
-    switch(type) {
+
+    switch(fileRes.type) {
         case 'file-open-error': {
             const contactsBookHtml = contacts.entryHtml({
                 rootUrl:    contacts.baseUrl,
@@ -61,18 +79,16 @@ export async function contactsEndpoint({
             return
         }
         case 'file-open-ok': {
-            await using cleanup = new AsyncDisposableStack()
+            await using cleanup = fileRes.cleanup
             cleanup.defer(() => void res.end())
-            cleanup.defer(() => file.close())
 
-            const fileStat = await file.stat()
             res.writeHead(200, {
-                'Content-Length': fileStat.size,
+                'Content-Length': fileRes.size,
                 'Content-Type': contacts.mimeMap[path.extname(resourcePath)] 
                     ?? contacts.mimeUnknown,
             })
             // wait for file data
-            let {buffer, bytesRead} = await file.read()
+            let {buffer, bytesRead} = await fileRes.file.read()
             while(bytesRead !== 0) {
                 // write file data to res
                 if(!res.write(buffer)) {

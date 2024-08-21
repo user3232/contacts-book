@@ -148,14 +148,42 @@ function __disposeResources(env) {
 
 async function contactsEndpoint({ spaPath, res, contacts }) {
     const resourcePath = path.join(contacts.baseDirPath, spaPath);
-    console.log(`trying open: ${resourcePath}`);
     // first try respond with resource and when no resource, 
     // respond with app entry point html.
-    const { type, file, err } = await fs.open(resourcePath, fs.constants.O_RDONLY | fs.constants.O_NONBLOCK)
-        .then((file) => ({ type: 'file-open-ok', file, err: null }))
-        .catch((err) => ({ type: 'file-open-error', file: null, err }));
-    console.log(err);
-    switch (type) {
+    const fileRes = await fs.open(resourcePath, fs.constants.O_RDONLY | fs.constants.O_NONBLOCK)
+        .then(async (file) => {
+        const env_3 = { stack: [], error: void 0, hasError: false };
+        try {
+            const cleanup = __addDisposableResource(env_3, new AsyncDisposableStack(), true);
+            cleanup.defer(() => file.close());
+            const fileStat = await file.stat();
+            if (!fileStat.isFile()) {
+                return {
+                    type: 'file-open-error',
+                    file: null,
+                    err: 'file is directory'
+                };
+            }
+            const size = fileStat.size;
+            return {
+                type: 'file-open-ok',
+                file,
+                size,
+                cleanup: cleanup.move(),
+            };
+        }
+        catch (e_3) {
+            env_3.error = e_3;
+            env_3.hasError = true;
+        }
+        finally {
+            const result_3 = __disposeResources(env_3);
+            if (result_3)
+                await result_3;
+        }
+    })
+        .catch((err) => ({ type: 'file-open-error', err }));
+    switch (fileRes.type) {
         case 'file-open-error': {
             const env_1 = { stack: [], error: void 0, hasError: false };
             try {
@@ -193,17 +221,15 @@ async function contactsEndpoint({ spaPath, res, contacts }) {
         case 'file-open-ok': {
             const env_2 = { stack: [], error: void 0, hasError: false };
             try {
-                const cleanup = __addDisposableResource(env_2, new AsyncDisposableStack(), true);
+                const cleanup = __addDisposableResource(env_2, fileRes.cleanup, true);
                 cleanup.defer(() => void res.end());
-                cleanup.defer(() => file.close());
-                const fileStat = await file.stat();
                 res.writeHead(200, {
-                    'Content-Length': fileStat.size,
+                    'Content-Length': fileRes.size,
                     'Content-Type': contacts.mimeMap[path.extname(resourcePath)]
                         ?? contacts.mimeUnknown,
                 });
                 // wait for file data
-                let { buffer, bytesRead } = await file.read();
+                let { buffer, bytesRead } = await fileRes.file.read();
                 while (bytesRead !== 0) {
                     // write file data to res
                     if (!res.write(buffer)) {
