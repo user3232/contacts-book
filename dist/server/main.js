@@ -1,6 +1,7 @@
 import fs from 'node:fs/promises';
 import http from 'node:http';
 import path from 'node:path';
+import 'disposablestack/auto';
 
 /**
  *
@@ -42,18 +43,6 @@ function RenderContactsHtml({ rootUrl, cssUrl, mainJsUrl, lang, title, icon, vie
         </body>
         </html>`.split('\n').map(line => line.substring(8)).join('\n');
 }
-console.log(RenderContactsHtml({
-    lang: 'en',
-    icon: {
-        url: '/spa/public/vite.svg',
-        type: 'image/svg+xml'
-    },
-    viewportContent: 'width=device-width, initial-scale=1.0',
-    title: 'Contacts book',
-    cssUrl: '/spa/css/index.css',
-    mainJsUrl: '/spa/dist/browser/main.js',
-    rootUrl: '/spa'
-}));
 
 async function exampleSaveContactsEntrypoint({ PORT, HOST, BASEURL_CONTACTS, TITLE_CONTACTS, ENTRYPATH_CONTACTS, }) {
     const contactsBookHtml = RenderContactsHtml({

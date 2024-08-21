@@ -1,5 +1,6 @@
 import { RenderContactsHtml } from './render-html.js';
 import http from 'node:http';
+import 'disposablestack/auto';
 export declare function contactsEndpoint({ spaPath, res, contacts }: {
     spaPath: string;
     res: http.ServerResponse<http.IncomingMessage>;

@@ -71,5 +71,8 @@
     "build-app": "rollup --config rollup.config.app.js",
     "build-lib": "rollup --config rollup.config.lib.js",
     "test": "tsx --test test"
+  },
+  "dependencies": {
+    "disposablestack": "^1.1.6"
   }
 }

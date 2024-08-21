@@ -3,6 +3,7 @@ import http from 'node:http'
 import fs from 'node:fs/promises'
 import path from 'node:path'
 import contactsMimeMap from '../mime-map.json' with {type: 'json'}
+import 'disposablestack/auto'
 
 
 export async function contactsEndpoint({

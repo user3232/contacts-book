@@ -65,15 +65,3 @@ export function RenderContactsHtml({
         </html>`.split('\n').map(line => line.substring(8)).join('\n')
 }
 
-console.log(RenderContactsHtml({
-    lang: 'en',
-    icon: {
-        url: '/spa/public/vite.svg',
-        type: 'image/svg+xml'
-    },
-    viewportContent: 'width=device-width, initial-scale=1.0',
-    title: 'Contacts book',
-    cssUrl: '/spa/css/index.css',
-    mainJsUrl: '/spa/dist/browser/main.js',
-    rootUrl: '/spa'
-}))
