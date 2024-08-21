@@ -1,6 +1,6 @@
 {
   "name": "@user3232/contacts-book",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "SPA application for storing contacts",
   "keywords": [
     "spa",
@@ -17,13 +17,13 @@
   "exports": {
     "./browser": {
       "browser": {
-        "types": "./dist/browser/main.d.ts",
+        "types": "./dist/browser/src/main.d.ts",
         "import": "./dist/browser/main.js"
       }
     },
     "./server": {
       "node": {
-        "types": "./dist/server/main.d.ts",
+        "types": "./dist/server/lib/index.d.ts",
         "import": "./dist/server/main.js"
       }
     },
