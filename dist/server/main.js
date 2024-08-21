@@ -148,11 +148,13 @@ function __disposeResources(env) {
 
 async function contactsEndpoint({ spaPath, res, contacts }) {
     const resourcePath = path.join(contacts.baseDirPath, spaPath);
+    console.log(`trying open: ${resourcePath}`);
     // first try respond with resource and when no resource, 
     // respond with app entry point html.
-    const { type, file } = await fs.open(resourcePath, fs.constants.O_RDONLY | fs.constants.O_NONBLOCK)
+    const { type, file, err } = await fs.open(resourcePath, fs.constants.O_RDONLY | fs.constants.O_NONBLOCK)
         .then((file) => ({ type: 'file-open-ok', file, err: null }))
         .catch((err) => ({ type: 'file-open-error', file: null, err }));
+    console.log(err);
     switch (type) {
         case 'file-open-error': {
             const env_1 = { stack: [], error: void 0, hasError: false };
