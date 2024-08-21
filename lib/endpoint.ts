@@ -14,48 +14,50 @@ export async function contactsEndpoint({
     contacts: {
         baseUrl: string,
         baseDirPath: string,
-        mimeMap: Partial<Record<string, string>>,
+        mimeMap: Partial<Record<string, {type: string, charset: string}>>,
         mimeUnknown: string,
         title: string,
         entryHtml: typeof RenderContactsHtml,
     }
 }) {
     const resourcePath = path.join(contacts.baseDirPath, spaPath)
+    console.log(`resourcePath: ${resourcePath}`)
+
+
+    
 
     // first try respond with resource and when no resource, 
     // respond with app entry point html.
-    const fileRes = await fs.open(
-        resourcePath, 
-        fs.constants.O_RDONLY | fs.constants.O_NONBLOCK
+    const fileRes = await fs.readFile(
+        resourcePath,
+        'utf-8'
     )
     .then(async (file) => {
-        await using cleanup = new AsyncDisposableStack()
-        cleanup.defer(async () => {
-            await file.close()
-        })
-        const fileStat = await file.stat()
-        if(!fileStat.isFile()) {
+        const fileExt = path.extname(resourcePath).substring(1)
+        const mime = contacts.mimeMap[fileExt]
+        if(!mime) {
             return {
                 type: 'file-open-error' as const, 
-                file: null, 
-                err: 'file is directory'
+                err: 'unknown mime!'
             }
         }
-        const size = fileStat.size
-        return {
+        return ({
             type: 'file-open-ok' as const, 
             file, 
-            size,
-            cleanup: cleanup.move(),
-        }
+            mime,
+        })
     })
-    .catch((err) => ({type: 'file-open-error' as const, err}))
+    .catch((err) => ({
+        type: 'file-open-error' as const, 
+        err
+    }))
 
-    
 
 
     switch(fileRes.type) {
         case 'file-open-error': {
+            console.log(fileRes.type)
+            console.warn(fileRes.err)
             const contactsBookHtml = contacts.entryHtml({
                 rootUrl:    contacts.baseUrl,
                 cssUrl:     `${contacts.baseUrl}/css/index.css`,
@@ -70,35 +72,34 @@ export async function contactsEndpoint({
             })
 
             await using cleanup = new AsyncDisposableStack()
-            cleanup.defer(() => { res.end() })
+            cleanup.defer(() => { 
+                console.log(`ending open-error res stream for ${resourcePath}`)
+                res.end() 
+            })
 
             res.writeHead(200, {
                 'Content-Length': Buffer.byteLength(contactsBookHtml),
-                'Content-Type': contactsMimeMap.html,
+                'Content-Type': `${contactsMimeMap.html.type}; charset=${contactsMimeMap.html.charset}`,
             })
-            res.end(contactsBookHtml)
+            res.write(contactsBookHtml)
 
             return
         }
         case 'file-open-ok': {
-            await using cleanup = fileRes.cleanup
-            cleanup.defer(() => { res.end() })
+            await using cleanup = new AsyncDisposableStack()
+            cleanup.defer(() => { 
+                console.log(`ending open-ok res stream ${resourcePath}`)
+                res.end() 
+            })
 
             res.writeHead(200, {
-                'Content-Length': fileRes.size,
-                'Content-Type': contacts.mimeMap[path.extname(resourcePath).substring(1)] 
-                    ?? contacts.mimeUnknown,
+                'Content-Length': Buffer.byteLength(fileRes.file),
+                'Content-Type': `${fileRes.mime.type}; charset=${fileRes.mime.charset}`,
             })
             // wait for file data
-            let {buffer, bytesRead} = await fileRes.file.read()
-            while(bytesRead !== 0) {
-                // write file data to res
-                if(!res.write(buffer)) {
-                    // wait for res drain event
-                    await new Promise((resolve) => res.once('drain', resolve))
-                }
-            }
-            res.end()
+            
+            res.write(fileRes.file, 'utf-8')
+            // res.end()
             return
         }
     }

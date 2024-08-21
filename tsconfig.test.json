@@ -1,0 +1,32 @@
+{
+  "compilerOptions": {
+    // "composite": true,
+    "target": "ES2022",
+    "useDefineForClassFields": true,
+    "lib": ["ESNext", "DOM"],
+    "module": "ESNext",
+    "skipLibCheck": true,
+
+    /* Bundler mode */
+    "moduleResolution": "Bundler",
+    "isolatedModules": true,
+    "declaration": true,
+    "outDir": "dist/server",
+    // "isolatedDeclarations": true,
+    "jsx": "react-jsx",
+
+    /* Linting */
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true
+  },
+  "include": [
+    "lib", 
+    "test"
+  ],
+  "files": [
+    "./mime-map.json", 
+    "./package.json"
+  ]
+}

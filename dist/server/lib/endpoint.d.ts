@@ -7,7 +7,10 @@ export declare function contactsEndpoint({ spaPath, res, contacts }: {
     contacts: {
         baseUrl: string;
         baseDirPath: string;
-        mimeMap: Partial<Record<string, string>>;
+        mimeMap: Partial<Record<string, {
+            type: string;
+            charset: string;
+        }>>;
         mimeUnknown: string;
         title: string;
         entryHtml: typeof RenderContactsHtml;

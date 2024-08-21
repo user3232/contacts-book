@@ -65,12 +65,30 @@ async function exampleSaveContactsEntrypoint({ PORT, HOST, BASEURL_CONTACTS, TIT
     });
 }
 
-var css = "text/css; charset=utf-8";
-var html = "text/html; charset=utf-8";
-var json = "application/json; charset=utf-8";
-var js = "application/javascript; charset=utf-8";
-var ts = "text/typescript; charset=utf-8";
-var svg = "image/svg+xml";
+var css = {
+	type: "text/css",
+	charset: "utf-8"
+};
+var html = {
+	type: "text/html",
+	charset: "utf-8"
+};
+var json = {
+	type: "application/json",
+	charset: "utf-8"
+};
+var js = {
+	type: "application/javascript",
+	charset: "utf-8"
+};
+var ts = {
+	type: "application/typescript",
+	charset: "utf-8"
+};
+var svg = {
+	type: "image/svg+xml",
+	charset: "utf-8"
+};
 var contactsMimeMap = {
 	css: css,
 	html: html,
@@ -149,47 +167,35 @@ function __disposeResources(env) {
 
 async function contactsEndpoint({ spaPath, res, contacts }) {
     const resourcePath = path.join(contacts.baseDirPath, spaPath);
+    console.log(`resourcePath: ${resourcePath}`);
     // first try respond with resource and when no resource, 
     // respond with app entry point html.
-    const fileRes = await fs.open(resourcePath, fs.constants.O_RDONLY | fs.constants.O_NONBLOCK)
+    const fileRes = await fs.readFile(resourcePath, 'utf-8')
         .then(async (file) => {
-        const env_3 = { stack: [], error: void 0, hasError: false };
-        try {
-            const cleanup = __addDisposableResource(env_3, new AsyncDisposableStack(), true);
-            cleanup.defer(async () => {
-                await file.close();
-            });
-            const fileStat = await file.stat();
-            if (!fileStat.isFile()) {
-                return {
-                    type: 'file-open-error',
-                    file: null,
-                    err: 'file is directory'
-                };
-            }
-            const size = fileStat.size;
+        const fileExt = path.extname(resourcePath).substring(1);
+        const mime = contacts.mimeMap[fileExt];
+        if (!mime) {
             return {
-                type: 'file-open-ok',
-                file,
-                size,
-                cleanup: cleanup.move(),
+                type: 'file-open-error',
+                err: 'unknown mime!'
             };
         }
-        catch (e_3) {
-            env_3.error = e_3;
-            env_3.hasError = true;
-        }
-        finally {
-            const result_3 = __disposeResources(env_3);
-            if (result_3)
-                await result_3;
-        }
+        return ({
+            type: 'file-open-ok',
+            file,
+            mime,
+        });
     })
-        .catch((err) => ({ type: 'file-open-error', err }));
+        .catch((err) => ({
+        type: 'file-open-error',
+        err
+    }));
     switch (fileRes.type) {
         case 'file-open-error': {
             const env_1 = { stack: [], error: void 0, hasError: false };
             try {
+                console.log(fileRes.type);
+                console.warn(fileRes.err);
                 const contactsBookHtml = contacts.entryHtml({
                     rootUrl: contacts.baseUrl,
                     cssUrl: `${contacts.baseUrl}/css/index.css`,
@@ -203,12 +209,15 @@ async function contactsEndpoint({ spaPath, res, contacts }) {
                     viewportContent: 'width=device-width, initial-scale=1.0',
                 });
                 const cleanup = __addDisposableResource(env_1, new AsyncDisposableStack(), true);
-                cleanup.defer(() => { res.end(); });
+                cleanup.defer(() => {
+                    console.log(`ending open-error res stream for ${resourcePath}`);
+                    res.end();
+                });
                 res.writeHead(200, {
                     'Content-Length': Buffer.byteLength(contactsBookHtml),
-                    'Content-Type': contactsMimeMap.html,
+                    'Content-Type': `${contactsMimeMap.html.type}; charset=${contactsMimeMap.html.charset}`,
                 });
-                res.end(contactsBookHtml);
+                res.write(contactsBookHtml);
                 return;
             }
             catch (e_1) {
@@ -224,23 +233,18 @@ async function contactsEndpoint({ spaPath, res, contacts }) {
         case 'file-open-ok': {
             const env_2 = { stack: [], error: void 0, hasError: false };
             try {
-                const cleanup = __addDisposableResource(env_2, fileRes.cleanup, true);
-                cleanup.defer(() => { res.end(); });
+                const cleanup = __addDisposableResource(env_2, new AsyncDisposableStack(), true);
+                cleanup.defer(() => {
+                    console.log(`ending open-ok res stream ${resourcePath}`);
+                    res.end();
+                });
                 res.writeHead(200, {
-                    'Content-Length': fileRes.size,
-                    'Content-Type': contacts.mimeMap[path.extname(resourcePath).substring(1)]
-                        ?? contacts.mimeUnknown,
+                    'Content-Length': Buffer.byteLength(fileRes.file),
+                    'Content-Type': `${fileRes.mime.type}; charset=${fileRes.mime.charset}`,
                 });
                 // wait for file data
-                let { buffer, bytesRead } = await fileRes.file.read();
-                while (bytesRead !== 0) {
-                    // write file data to res
-                    if (!res.write(buffer)) {
-                        // wait for res drain event
-                        await new Promise((resolve) => res.once('drain', resolve));
-                    }
-                }
-                res.end();
+                res.write(fileRes.file, 'utf-8');
+                // res.end()
                 return;
             }
             catch (e_2) {
