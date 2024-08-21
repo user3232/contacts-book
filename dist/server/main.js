@@ -225,7 +225,7 @@ async function contactsEndpoint({ spaPath, res, contacts }) {
                 cleanup.defer(() => void res.end());
                 res.writeHead(200, {
                     'Content-Length': fileRes.size,
-                    'Content-Type': contacts.mimeMap[path.extname(resourcePath)]
+                    'Content-Type': contacts.mimeMap[path.extname(resourcePath).substring(1)]
                         ?? contacts.mimeUnknown,
                 });
                 // wait for file data

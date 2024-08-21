@@ -84,7 +84,7 @@ export async function contactsEndpoint({
 
             res.writeHead(200, {
                 'Content-Length': fileRes.size,
-                'Content-Type': contacts.mimeMap[path.extname(resourcePath)] 
+                'Content-Type': contacts.mimeMap[path.extname(resourcePath).substring(1)] 
                     ?? contacts.mimeUnknown,
             })
             // wait for file data
