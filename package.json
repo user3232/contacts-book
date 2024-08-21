@@ -16,14 +16,14 @@
   "type": "module",
   "exports": {
     "./browser": {
+      "types": "./dist/browser/src/main.d.ts",
       "browser": {
-        "types": "./dist/browser/src/main.d.ts",
         "import": "./dist/browser/main.js"
       }
     },
     "./server": {
+      "types": "./dist/server/lib/index.d.ts",
       "node": {
-        "types": "./dist/server/lib/index.d.ts",
         "import": "./dist/server/main.js"
       }
     },
@@ -38,6 +38,7 @@
     "src",
     "index.html",
     "package.json",
+    "mime-map.json",
     "README"
   ],
   "devDependencies": {
