@@ -25,7 +25,7 @@
     "lib", 
   ],
   "files": [
-    "./mime-map.json", 
+    "./mimemap.json", 
     "./package.json"
   ]
 }

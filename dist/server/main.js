@@ -65,37 +65,46 @@ async function exampleSaveContactsEntrypoint({ PORT, HOST, BASEURL_CONTACTS, TIT
     });
 }
 
-var css = {
-	type: "text/css",
-	charset: "utf-8"
+var name = "@user3232/contacts-book";
+var version = "1.0.11";
+var mimes = {
+	".css": {
+		mime: "text/css",
+		charset: "utf-8"
+	},
+	".html": {
+		mime: "text/html",
+		charset: "utf-8"
+	},
+	".json": {
+		mime: "application/json",
+		charset: "utf-8"
+	},
+	".js": {
+		mime: "application/javascript",
+		charset: "utf-8"
+	},
+	".ts": {
+		mime: "application/typescript",
+		charset: "utf-8"
+	},
+	".svg": {
+		mime: "image/svg+xml",
+		charset: "utf-8"
+	}
 };
-var html = {
-	type: "text/html",
-	charset: "utf-8"
-};
-var json = {
-	type: "application/json",
-	charset: "utf-8"
-};
-var js = {
-	type: "application/javascript",
-	charset: "utf-8"
-};
-var ts = {
-	type: "application/typescript",
-	charset: "utf-8"
-};
-var svg = {
-	type: "image/svg+xml",
-	charset: "utf-8"
+var scopes = {
+	"./ascii/": {
+		".data": {
+			mime: "application/octet-stream"
+		}
+	}
 };
 var contactsMimeMap = {
-	css: css,
-	html: html,
-	json: json,
-	js: js,
-	ts: ts,
-	svg: svg
+	name: name,
+	version: version,
+	mimes: mimes,
+	scopes: scopes
 };
 
 /******************************************************************************
@@ -165,7 +174,210 @@ function __disposeResources(env) {
     return next();
 }
 
-async function contactsEndpoint({ spaPath, res, contacts }) {
+async function contactsEndpointStreaming({ spaPath, res, contacts }) {
+    const resourcePath = path.join(contacts.baseDirPath, spaPath);
+    console.log(`resourcePath: ${resourcePath}`);
+    // first try respond with resource and when no resource, 
+    // respond with app entry point html.
+    const sendFileResult = await fs.open(resourcePath, fs.constants.O_RDONLY | fs.constants.O_NONBLOCK)
+        .then(async (file) => {
+        const env_2 = { stack: [], error: void 0, hasError: false };
+        try {
+            const cleanup = __addDisposableResource(env_2, new AsyncDisposableStack(), true);
+            cleanup.defer(async () => {
+                await file.close();
+            });
+            const fileStat = await file.stat();
+            if (!fileStat.isFile()) {
+                return {
+                    type: 'file-open-error',
+                    resourcePath,
+                    err: 'file is directory'
+                };
+            }
+            const size = fileStat.size;
+            const fileExt = path.extname(resourcePath).substring(1);
+            const mime = contacts.mimeMap.mimes?.[fileExt];
+            if (!mime) {
+                return {
+                    type: 'file-mime-error',
+                    resourcePath,
+                    err: 'unknown mime!'
+                };
+            }
+            cleanup.defer(async () => {
+                await res.end();
+            });
+            res.writeHead(200, {
+                'Content-Length': size,
+                'Content-Type': `${mime.mime}; charset=${mime.charset}`,
+                'Transfer-Encoding': 'chunked'
+            });
+            console.log({
+                log: 'streaming',
+                resourcePath,
+                fileExt,
+                mime,
+                'Content-Length': size,
+                'Content-Type': `${contactsMimeMap.mimes['.html'].mime}; charset=${contactsMimeMap.mimes['.html'].charset}`,
+                'Transfer-Encoding': 'chunked'
+            });
+            if (false) ;
+            if (false) ;
+            if (false) ;
+            if (true) {
+                const fileReadable = file.readableWebStream({ type: 'bytes' });
+                const httpWritable = writableFromHttpResponse(res);
+                await fileReadable.pipeTo(httpWritable, {
+                    signal: AbortSignal.timeout(10000)
+                });
+            }
+            return {
+                type: 'file-open-ok',
+                resourcePath,
+            };
+        }
+        catch (e_2) {
+            env_2.error = e_2;
+            env_2.hasError = true;
+        }
+        finally {
+            const result_2 = __disposeResources(env_2);
+            if (result_2)
+                await result_2;
+        }
+    })
+        .catch((err) => ({
+        type: 'file-stream-error',
+        err
+    }));
+    if (sendFileResult.type === 'file-stream-error'
+        || sendFileResult.type === 'file-open-error'
+        || sendFileResult.type === 'file-mime-error') {
+        console.error(sendFileResult);
+    }
+    if (sendFileResult.type === 'file-open-error'
+        || sendFileResult.type === 'file-stream-error'
+        || sendFileResult.type === 'file-mime-error') {
+        const env_1 = { stack: [], error: void 0, hasError: false };
+        try {
+            const contactsBookHtml = contacts.entryHtml({
+                rootUrl: contacts.baseUrl,
+                cssUrl: `${contacts.baseUrl}/css/index.css`,
+                mainJsUrl: `${contacts.baseUrl}/dist/browser/main.js`,
+                icon: {
+                    url: `${contacts.baseUrl}/public/vite.svg`,
+                    type: 'image/svg+xml'
+                },
+                lang: 'en',
+                title: 'Contacts book',
+                viewportContent: 'width=device-width, initial-scale=1.0',
+            });
+            const cleanup = __addDisposableResource(env_1, new AsyncDisposableStack(), true);
+            cleanup.defer(async () => {
+                await res.end();
+            });
+            res.writeHead(200, {
+                'Content-Length': Buffer.byteLength(contactsBookHtml),
+                'Content-Type': `${contactsMimeMap.mimes['.html'].mime}; charset=${contactsMimeMap.mimes['.html'].charset}`,
+            });
+            res.end(contactsBookHtml);
+            return;
+        }
+        catch (e_1) {
+            env_1.error = e_1;
+            env_1.hasError = true;
+        }
+        finally {
+            const result_1 = __disposeResources(env_1);
+            if (result_1)
+                await result_1;
+        }
+    }
+    return;
+}
+function writableFromHttpResponse(res) {
+    return new WritableStream({
+        start(controller) {
+            if (!res.writable) ;
+            controller.signal.addEventListener('abort', function () {
+                controller.error(this.reason);
+            });
+        },
+        write(chunk) {
+            // is controller.error(err) needed if rejected?
+            return writeHttpResponse(res, chunk);
+        },
+        close() {
+            res.end();
+        },
+        abort(reason) {
+            res.destroy(reason instanceof Error
+                ? reason
+                : new Error('http response destroyed', { cause: reason }));
+        }
+    });
+}
+function writeHttpResponse(res, chunk) {
+    return new Promise((resolve, reject) => {
+        const ready = res.write(chunk, (err) => { if (err)
+            reject(err); });
+        if (ready) {
+            resolve();
+        }
+        else {
+            res.once('drain', resolve);
+        }
+    });
+}
+
+function exampleRunContactsServer({ PORT, HOST, BASEURL_CONTACTS, BASEPATH_CONTACTS, TITLE_CONTACTS, }) {
+    const contactsServer = http.createServer(async (req, res) => {
+        try {
+            const url = req.url;
+            // requested resource outside web app base url:
+            if (!url || (url !== BASEURL_CONTACTS && !url.startsWith(`${BASEURL_CONTACTS}/`))) {
+                const errorHtml = `See Contacts Book at: http://${HOST}${PORT ? `:${PORT}` : ``}${BASEURL_CONTACTS}`;
+                res.writeHead(200, {
+                    'Content-Length': Buffer.byteLength(errorHtml),
+                    'Content-Type': 'text/html; charset=utf-8',
+                });
+                res.end(errorHtml);
+                return;
+            }
+            // requested resource web app
+            await contactsEndpointStreaming({
+                // await contactsEndpointBuffering({
+                res,
+                spaPath: path.normalize(url.substring(BASEURL_CONTACTS.length)),
+                contacts: {
+                    baseUrl: BASEURL_CONTACTS,
+                    baseDirPath: BASEPATH_CONTACTS,
+                    mimeMap: contactsMimeMap,
+                    mimeUnknown: 'text/plain; charset=utf-8',
+                    entryHtml: RenderContactsHtml,
+                    title: TITLE_CONTACTS,
+                },
+            });
+        }
+        catch (err) {
+            console.log('Response error occured!');
+            console.error(err);
+        }
+        finally {
+            res.end();
+        }
+    });
+    contactsServer.listen(PORT, HOST, () => {
+        console.log(`Listening on http://${HOST}${PORT ? `:${PORT}` : ``}`);
+        console.log(`
+            See Contacts Book web application at 
+            http://${HOST}${PORT ? `:${PORT}` : ``}${BASEURL_CONTACTS}
+        `);
+    });
+}
+
+async function contactsEndpointBuffering({ spaPath, res, contacts }) {
     const resourcePath = path.join(contacts.baseDirPath, spaPath);
     console.log(`resourcePath: ${resourcePath}`);
     // first try respond with resource and when no resource, 
@@ -173,7 +385,7 @@ async function contactsEndpoint({ spaPath, res, contacts }) {
     const fileRes = await fs.readFile(resourcePath, 'utf-8')
         .then(async (file) => {
         const fileExt = path.extname(resourcePath).substring(1);
-        const mime = contacts.mimeMap[fileExt];
+        const mime = contacts.mimeMap.mimes?.[fileExt];
         if (!mime) {
             return {
                 type: 'file-open-error',
@@ -215,7 +427,7 @@ async function contactsEndpoint({ spaPath, res, contacts }) {
                 });
                 res.writeHead(200, {
                     'Content-Length': Buffer.byteLength(contactsBookHtml),
-                    'Content-Type': `${contactsMimeMap.html.type}; charset=${contactsMimeMap.html.charset}`,
+                    'Content-Type': `${contactsMimeMap.mimes['.html'].mime}; charset=${contactsMimeMap.mimes['.html'].charset}`,
                 });
                 res.write(contactsBookHtml);
                 return;
@@ -240,7 +452,7 @@ async function contactsEndpoint({ spaPath, res, contacts }) {
                 });
                 res.writeHead(200, {
                     'Content-Length': Buffer.byteLength(fileRes.file),
-                    'Content-Type': `${fileRes.mime.type}; charset=${fileRes.mime.charset}`,
+                    'Content-Type': `${fileRes.mime.mime}; charset=${fileRes.mime.charset}`,
                 });
                 // wait for file data
                 res.write(fileRes.file, 'utf-8');
@@ -260,51 +472,6 @@ async function contactsEndpoint({ spaPath, res, contacts }) {
     }
 }
 
-function exampleRunContactsServer({ PORT, HOST, BASEURL_CONTACTS, BASEPATH_CONTACTS, TITLE_CONTACTS, }) {
-    const contactsServer = http.createServer(async (req, res) => {
-        try {
-            const url = req.url;
-            // requested resource outside web app base url:
-            if (!url || (url !== BASEURL_CONTACTS && !url.startsWith(`${BASEURL_CONTACTS}/`))) {
-                const errorHtml = `See Contacts Book at: http://${HOST}${PORT ? `:${PORT}` : ``}${BASEURL_CONTACTS}`;
-                res.writeHead(200, {
-                    'Content-Length': Buffer.byteLength(errorHtml),
-                    'Content-Type': 'text/html; charset=utf-8',
-                });
-                res.end(errorHtml);
-                return;
-            }
-            // requested resource web app
-            await contactsEndpoint({
-                res,
-                spaPath: path.normalize(url.substring(BASEURL_CONTACTS.length)),
-                contacts: {
-                    baseUrl: BASEURL_CONTACTS,
-                    baseDirPath: BASEPATH_CONTACTS,
-                    mimeMap: contactsMimeMap,
-                    mimeUnknown: 'text/plain; charset=utf-8',
-                    entryHtml: RenderContactsHtml,
-                    title: TITLE_CONTACTS,
-                },
-            });
-        }
-        catch (err) {
-            console.log('Response error occured!');
-            console.error(err);
-        }
-        finally {
-            res.end();
-        }
-    });
-    contactsServer.listen(PORT, HOST, () => {
-        console.log(`Listening on http://${HOST}${PORT ? `:${PORT}` : ``}`);
-        console.log(`
-            See Contacts Book web application at 
-            http://${HOST}${PORT ? `:${PORT}` : ``}${BASEURL_CONTACTS}
-        `);
-    });
-}
-
 const EXAMPLE_PORT = 3333;
 const EXAMPLE_HOST = 'localhost';
 const EXAMPLE_BASEURL_CONTACTS = '/contacts';
@@ -312,4 +479,4 @@ const EXAMPLE_BASEPATH_CONTACTS = './node_modules/@user3232/contacts-book';
 const EXAMPLE_TITLE_CONTACTS = 'Contacts book';
 const EXAMPLE_ENTRYPATH_CONTACTS = `./public/contacts/index.html`;
 
-export { EXAMPLE_BASEPATH_CONTACTS, EXAMPLE_BASEURL_CONTACTS, EXAMPLE_ENTRYPATH_CONTACTS, EXAMPLE_HOST, EXAMPLE_PORT, EXAMPLE_TITLE_CONTACTS, RenderContactsHtml, contactsEndpoint, exampleRunContactsServer, exampleSaveContactsEntrypoint };
+export { EXAMPLE_BASEPATH_CONTACTS, EXAMPLE_BASEURL_CONTACTS, EXAMPLE_ENTRYPATH_CONTACTS, EXAMPLE_HOST, EXAMPLE_PORT, EXAMPLE_TITLE_CONTACTS, RenderContactsHtml, contactsEndpointBuffering as contactsEndpoint, exampleRunContactsServer, exampleSaveContactsEntrypoint };

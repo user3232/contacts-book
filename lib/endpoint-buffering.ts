@@ -2,11 +2,12 @@ import { RenderContactsHtml } from './render-html.js'
 import http from 'node:http'
 import fs from 'node:fs/promises'
 import path from 'node:path'
-import contactsMimeMap from '../mime-map.json' with {type: 'json'}
+import contactsMimeMap from '../mimemap.json' with {type: 'json'}
 import 'disposablestack/auto'
+import { MimeMap, Extension } from '@user3232/mime/mimemap.js'
 
 
-export async function contactsEndpoint({
+export async function contactsEndpointBuffering({
     spaPath, res, contacts
 }: {
     spaPath: string,
@@ -14,7 +15,7 @@ export async function contactsEndpoint({
     contacts: {
         baseUrl: string,
         baseDirPath: string,
-        mimeMap: Partial<Record<string, {type: string, charset: string}>>,
+        mimeMap: MimeMap,
         mimeUnknown: string,
         title: string,
         entryHtml: typeof RenderContactsHtml,
@@ -34,7 +35,7 @@ export async function contactsEndpoint({
     )
     .then(async (file) => {
         const fileExt = path.extname(resourcePath).substring(1)
-        const mime = contacts.mimeMap[fileExt]
+        const mime = contacts.mimeMap.mimes?.[fileExt as Extension]
         if(!mime) {
             return {
                 type: 'file-open-error' as const, 
@@ -79,7 +80,7 @@ export async function contactsEndpoint({
 
             res.writeHead(200, {
                 'Content-Length': Buffer.byteLength(contactsBookHtml),
-                'Content-Type': `${contactsMimeMap.html.type}; charset=${contactsMimeMap.html.charset}`,
+                'Content-Type': `${contactsMimeMap.mimes['.html'].mime}; charset=${contactsMimeMap.mimes['.html'].charset}`,
             })
             res.write(contactsBookHtml)
 
@@ -94,7 +95,7 @@ export async function contactsEndpoint({
 
             res.writeHead(200, {
                 'Content-Length': Buffer.byteLength(fileRes.file),
-                'Content-Type': `${fileRes.mime.type}; charset=${fileRes.mime.charset}`,
+                'Content-Type': `${fileRes.mime.mime}; charset=${fileRes.mime.charset}`,
             })
             // wait for file data
             

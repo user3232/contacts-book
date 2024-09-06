@@ -1,6 +1,6 @@
 {
   "name": "@user3232/contacts-book",
-  "version": "1.0.10",
+  "version": "1.0.11",
   "description": "SPA application for storing contacts",
   "keywords": [
     "spa",
@@ -11,7 +11,7 @@
   "license": "ISC",
   "repository": {
     "type": "git",
-    "url": "git+file:///home/mk/github/tutorials/contacts-book"
+    "url": "https://github.com/user3232/contacts-book"
   },
   "type": "module",
   "exports": {
@@ -27,7 +27,7 @@
         "import": "./dist/server/main.js"
       }
     },
-    "./mime-map.json": "./mime-map.json",
+    "./mimemap.json": "./mimemap.json",
     "./package.json": "./package.json"
   },
   "files": [
@@ -38,7 +38,7 @@
     "src",
     "index.html",
     "package.json",
-    "mime-map.json",
+    "mimemap.json",
     "README"
   ],
   "devDependencies": {
@@ -50,8 +50,8 @@
     "@types/react": "^18.3.3",
     "@types/react-dom": "^18.3.0",
     "@types/sort-by": "^1.2.3",
-    "@user3232/flatten-vite-manifest": "git+file:///home/mk/github/tutorials/flatten-vite-manifest#semver:latest",
-    "@user3232/mime": "git+file:///home/mk/github/tutorials/mime#semver:latest",
+    "@user3232/bytes": "github:user3232/bytes#semver:latest",
+    "@user3232/vite-manifest": "github:user3232/vite-manifest#semver:latest",
     "globals": "^15.9.0",
     "http-server": "^14.1.1",
     "localforage": "^1.10.0",
@@ -73,6 +73,7 @@
     "test": "tsx --test test"
   },
   "dependencies": {
+    "@user3232/mime": "github:user3232/mime#semver:latest",
     "disposablestack": "^1.1.6"
   }
 }

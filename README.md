@@ -7,7 +7,7 @@ Web application for storing contacts.
 Install latest version:
 
 ```sh
-npm install @user3232/contacts-book@git+file:///home/mk/github/tutorials/contacts-book#semver:latest
+npm install user3232/contacts-book#semver:latest
 ```
 
 ## Deploy

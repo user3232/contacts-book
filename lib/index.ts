@@ -9,5 +9,5 @@ export const EXAMPLE_ENTRYPATH_CONTACTS = `./public/contacts/index.html`
 
 export { exampleSaveContactsEntrypoint } from './example-entry.js'
 export { exampleRunContactsServer } from './example-server.js'
-export { contactsEndpoint } from './endpoint.js'
+export { contactsEndpointBuffering as contactsEndpoint } from './endpoint-buffering.js'
 export { RenderContactsHtml } from './render-html.js'

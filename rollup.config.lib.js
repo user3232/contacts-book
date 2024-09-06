@@ -1,7 +1,7 @@
 // import pkg from './package.json' with {type: 'json'}
 import typescript from '@rollup/plugin-typescript'
 import json from '@rollup/plugin-json'
-import { defineConfig } from 'rollup';
+import { defineConfig } from 'rollup'
 
 export default defineConfig({
     input: {

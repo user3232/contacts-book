@@ -1,0 +1,37 @@
+{
+    "name": "@user3232/contacts-book",
+    "version": "1.0.11",
+    "mimes": {
+        ".css": {
+            "mime": "text/css",
+            "charset": "utf-8"
+        },
+        ".html": {
+            "mime": "text/html",
+            "charset": "utf-8"
+        },
+        ".json": {
+            "mime": "application/json",
+            "charset": "utf-8"
+        },
+        ".js": {
+            "mime": "application/javascript",
+            "charset": "utf-8"
+        },
+        ".ts": {
+            "mime": "application/typescript",
+            "charset": "utf-8"
+        },
+        ".svg": {
+            "mime": "image/svg+xml",
+            "charset": "utf-8"
+        }
+    },
+    "scopes": {
+        "./ascii/": {
+            ".data": {
+                "mime": "application/octet-stream"
+            }
+        }
+    }
+}

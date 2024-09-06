@@ -1,8 +1,9 @@
 import { RenderContactsHtml } from './render-html'
 import http from 'node:http'
 import path from 'node:path'
-import contactsMimeMap from '../mime-map.json' with {type: 'json'}
-import { contactsEndpoint } from './endpoint.js'
+import contactsMimeMap from '../mimemap.json' with {type: 'json'}
+// import { contactsEndpointBuffering } from './endpoint-buffering.js'
+import { contactsEndpointStreaming } from './endpoint-streaming.js'
 
 
 
@@ -38,7 +39,8 @@ export function exampleRunContactsServer({
             }
     
             // requested resource web app
-            await contactsEndpoint({
+            await contactsEndpointStreaming({
+            // await contactsEndpointBuffering({
                 res,
                 spaPath: path.normalize(
                     url.substring(BASEURL_CONTACTS.length)
